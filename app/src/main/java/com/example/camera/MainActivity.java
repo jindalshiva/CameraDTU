@@ -1,33 +1,32 @@
 package com.example.camera;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.os.PowerManager;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
+import android.os.SystemClock;
 import android.util.Log;
+import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 
 public class MainActivity extends BroadcastReceiver {
 
-
+    public SurfaceView surfaceView;
+    SurfaceHolder surfaceHolder;
+    Camera.PictureCallback rawCallback;
+    Camera.ShutterCallback shutterCallback;
     private static final int MY_CAMERA_REQUEST_CODE = 100;
 
     private static PowerManager.WakeLock wakeLock;
@@ -48,17 +47,27 @@ public class MainActivity extends BroadcastReceiver {
 //                    MY_CAMERA_REQUEST_CODE);
 //        }
         // Put here YOUR code.
-        Toast.makeText(context, "Alarm !!!!!!!!!!", Toast.LENGTH_LONG).show(); // For example
-        CapturePhoto(context);
+        Log.d("kkkk","Reached Broadcast ");
+
+        Intent intent1 = new Intent(context, Main3Activity.class);
+        intent1.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        context.startActivity(intent1);
+//        surfaceView = m.surfaceView;
+//        surfaceHolder = surfaceView.getHolder();
+//        surfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+        //Toast.makeText(context, "Alarm !!!!!!!!!!", Toast.LENGTH_LONG).show(); // For example
+        //CapturePhoto(context, surfaceHolder);
         wakeLock.release();
     }
 
     public void setAlarm(Context context)
     {
         AlarmManager am =( AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
+        long repeatInterval = AlarmManager.INTERVAL_FIFTEEN_MINUTES/3;
+        long triggerTime = SystemClock.elapsedRealtime() + repeatInterval;
         Intent i = new Intent(context, MainActivity.class);
         PendingIntent pi = PendingIntent.getBroadcast(context, 0, i, 0);
-        am.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), 1000  * 10, pi); // Millisec * Second * Minute
+        am.setRepeating(AlarmManager.RTC_WAKEUP, triggerTime, repeatInterval, pi); // Millisec * Second * Minute
     }
 
     public void cancelAlarm(Context context)
@@ -71,7 +80,7 @@ public class MainActivity extends BroadcastReceiver {
 
 
 
-    private void CapturePhoto(final Context context) {
+    private void CapturePhoto(final Context context, SurfaceHolder surfaceHolder) {
 
         Log.d("kkkk","Preparing to take photo");
         Toast.makeText(context,"Preparing to take photo",Toast.LENGTH_SHORT).show();
@@ -100,6 +109,19 @@ public class MainActivity extends BroadcastReceiver {
                 Log.d("kkkk","Got the camera, creating the dummy surface texture");
                 Toast.makeText(context,"Got the camera, creating the dummy surface texture",Toast.LENGTH_SHORT).show();
                 try {
+                    Camera.Parameters parameters = camera.getParameters();
+                    List<Camera.Size> sizes = camera.getParameters().getSupportedPictureSizes();
+                    Camera.Size size = sizes.get(0);
+                    for(int i=0;i<sizes.size();i++)
+                    {
+                        if(sizes.get(i).width > size.width)
+                            size = sizes.get(i);
+                    }
+                    parameters.setPreviewSize(size.width/5, size.height/5);
+                    parameters.setJpegQuality(100);
+                    parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+//                    camera.setParameters(parameters);
+
                     camera.setPreviewTexture(new SurfaceTexture(0));
                     camera.startPreview();
                 } catch (Exception e) {

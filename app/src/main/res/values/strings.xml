@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Camera</string>
+    <string name="request_permission">This app needs camera permission.</string>
+    <string name="take_picture">Take picture</string>
 </resources>
